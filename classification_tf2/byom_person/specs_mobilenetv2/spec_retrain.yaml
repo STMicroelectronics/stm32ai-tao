@@ -1,0 +1,52 @@
+results_dir: "/workspace/tao-experiments/classification_tf2/byom_person/results_mobilenetv2/output_retrain"
+encryption_key: "nvidia_tlt"
+dataset:
+  train_dataset_path: "/workspace/tao-experiments/data/split/train"
+  val_dataset_path: "/workspace/tao-experiments/data/split/val"
+  preprocess_mode: 'tf'
+  num_classes: 2
+  augmentation:
+    enable_color_augmentation: True
+    enable_center_crop: False
+    enable_random_crop: True
+    mixup_alpha: 0.2
+train:
+  qat: False
+  checkpoint: '/workspace/tao-experiments/classification_tf2/byom_person/results_mobilenetv2/output/prune/model_th=0.5_eq=union.tlt'
+  batch_size_per_gpu: 64
+  num_epochs: 80
+  optim_config:
+    optimizer: 'adam'
+  lr_config:
+    scheduler: 'cosine'
+    learning_rate: 0.001
+    soft_start: 0.05
+  reg_config:
+    type: 'L2'
+    scope: ['conv2d', 'dense']
+    weight_decay: 0.00005
+model:
+  backbone: 'byom'
+  input_width: 128
+  input_height: 128
+  input_channels: 3
+  input_image_depth: 8
+  byom_model: '/workspace/tao-experiments/classification_tf2/pretrained_mobilenetv2/mobilenetv2_128_0_5/mobilenetv2_128_0_5.tltb'
+  resize_interpolation_method: 'bilinear'
+  use_batch_norm: True
+  freeze_bn: False
+  freeze_blocks: []
+evaluate:
+  dataset_path: '/workspace/tao-experiments/data/split/test'
+  checkpoint: '/workspace/tao-experiments/classification_tf2/byom_person/results_mobilenetv2/output_retrain/weights/mobilenetv2_128_0_5_030.tlt'
+  top_k: 1
+  batch_size: 64
+  n_workers: 8
+inference:
+  checkpoint: '/workspace/tao-experiments/classification_tf2/byom_person/results_mobilenetv2/output_retrain/weights/mobilenetv2_128_0_5_030.tlt'
+  image_dir: '/workspace/tao-experiments/data/split/test/person'
+  classmap: '/workspace/tao-experiments/classification_tf2/byom_person/results_mobilenetv2/output_retrain/classmap.json'
+export:
+  checkpoint: 'EXPORTMODEL'
+  onnx_file: 'EXPORTDIR/byom.onnx'
+  
