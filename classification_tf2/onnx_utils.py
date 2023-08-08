@@ -11,6 +11,7 @@ import numpy as np
 import os
 
 import onnxruntime as rt
+from onnx import version_converter
 from onnx import ModelProto
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
@@ -323,22 +324,31 @@ def quantize_onnx_model(input_model, calibration_dataset_path, preproc_mode = 't
     
     # delete the temp files
     os.remove(infer_model)
+def change_opset(input_model, target_opset=14): 
+    
+    if not input_model.endswith('.onnx'):
+        raise Exception("Error! The model must be in onnx format")    
+    model = onnx.load(input_model)
+    # Check the current opset version
+    current_opset = model.opset_import[0].version
+    if current_opset == target_opset:
+        print(f"The model is already using opset {target_opset}")
+        return input_model
 
-def change_opset(model_path):
-    '''
-    change_opset(model_path)
-    function updates the opset of the exported onnx model in a way that this can be used in STM32Cube.AI
+    # Modify the opset version in the model
+    converted_model = version_converter.convert_version(model, target_opset)
+    temp_model_path = input_model+ '.temp'
+    onnx.save(converted_model, temp_model_path)
 
-    inputs:
-        model_path: (str) onnx model path
-                    the updated model over-writes the input model
-    '''
-    m = onnx.load(model_path)
-    onnx_opset = -1
-    for entry in m.opset_import:
-        if entry.domain == 'ai.onnx' or entry.domain == '':  # empty string == onnx domain
-            onnx_opset = entry.version
-    for entry in m.opset_import:
-        if entry.domain == 'com.ms.internal.nhwc':
-            entry.version = onnx_opset
-    onnx.save(m, model_path)
+    # Load the modified model using ONNX Runtime Check if the model is valid
+    session = rt.InferenceSession(temp_model_path)
+    try:
+        session.get_inputs()
+    except Exception as e:
+        print(f"An error occurred while loading the modified model: {e}")
+        return
+
+    # Replace the original model file with the modified model
+    os.replace(temp_model_path, input_model)
+    print(f"The model has been converted to opset {target_opset} and saved at the same location.")
+    return input_model

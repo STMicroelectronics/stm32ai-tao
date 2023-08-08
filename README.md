@@ -45,6 +45,7 @@ This project contains two folders:
 - **[byom_person](./classification_tf2/byom_person/)** : contains Jupyter Notebooks to train the BYOM models generated using byom_converters for person-detection use case as well as the configurations for running these files in folders:
    - [specs_mobilenetv2](./classification_tf2/byom_person/specs_mobilenetv2/), and 
    - [specs_resnet18](./classification_tf2/byom_person/specs_resnet18/).
+- **[tao_person](./classification_tf2/tao_person/)** : contains a jupyter notebook `stm32ai_tao_efficientnet_b0.ipynb` to fine-tune the pretrained `efficientnet_b0` model obtained from NGC model zoo, for person-detection use case as well as the configurations for running this file in folder [specs](./classification_tf2/tao_person/specs/).
 - **[LICENSE.md](./LICENSE.md)**
 - **[SECURITY.md](./SECURITY.md)**
 - **[CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)**

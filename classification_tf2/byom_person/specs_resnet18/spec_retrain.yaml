@@ -1,8 +1,8 @@
-results_dir: "/workspace/tao-experiments/classification_tf2/byom_person/results_resnet18/output_retrain"
-encryption_key: "nvidia_tlt"
+results_dir: '/workspace/tao-experiments/classification_tf2/byom_person/results_resnet18/output_retrain'
+encryption_key: 'nvidia_tlt'
 dataset:
-  train_dataset_path: "/workspace/tao-experiments/data/split/train"
-  val_dataset_path: "/workspace/tao-experiments/data/split/val"
+  train_dataset_path: '/workspace/tao-experiments/data/split/train'
+  val_dataset_path: '/workspace/tao-experiments/data/split/val'
   preprocess_mode: 'tf'
   num_classes: 2
   augmentation:
@@ -13,7 +13,7 @@ dataset:
 train:
   qat: False
   checkpoint: '/workspace/tao-experiments/classification_tf2/byom_person/results_resnet18/output/prune/model_th=0.68_eq=union.tlt'
-  batch_size_per_gpu: 64
+  batch_size_per_gpu: 128
   num_epochs: 80
   optim_config:
     optimizer: 'adam'
