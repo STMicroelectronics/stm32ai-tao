@@ -9,6 +9,7 @@
 import tensorflow as tf
 import numpy as np
 import os
+import cv2
 
 import onnxruntime as rt
 from onnx import version_converter
@@ -19,8 +20,9 @@ import onnx
 #====================== onnx evaluation =======================#
 # parameters to be used for the normalization step if 'torch' is selected as preproc_mode
 # these numbers are coming from 'imagenet' dataset
-torch_means = [0.485,0.456,0.406]
-torch_std = [0.224, 0.224, 0.224]
+torch_means = [np.float32(0.485),np.float32(0.456),np.float32(0.406)]
+torch_std = [np.float32(0.224), np.float32(0.224), np.float32(0.224)]
+caffe_mean = [np.float32(103.939), np.float32(116.779), np.float32(123.68)]
 
 def get_model(onnx_model_path):
     '''
@@ -81,8 +83,8 @@ def plot_confusion_matrix(cm, class_labels, save_path = "float_model", test_accu
     plt.xticks(np.arange(0, len(class_labels)), class_labels)
     plt.yticks(np.arange(0, len(class_labels)), class_labels)
     plt.rcParams.update({'font.size': 14})
-    plt.show()
     plt.savefig(f'{save_path}_confusion-matrix.png')
+    plt.show()
 
 def get_preprocessed_image(image_path, width = 128, height = 128, preproc_mode = 'tf', interpolation = 'bilinear'):
     '''
@@ -93,22 +95,36 @@ def get_preprocessed_image(image_path, width = 128, height = 128, preproc_mode =
         image_path: (str) path to the image file to be loaded and preprocessed
         width: (int) width of the output image (if original width is different the image will be resized)
         height: (int) height of the output image (if original width is different the image will be resized)
-        preproc_mode: (str) preprocessing mode, 'tf' or 'torch'
-                      'tf' will bring the image in the range of [-1,+1], preproc_image_pixels = -1 + (image_pixels/127.5)
-                      'torch' will apply double normalization based on imagenet data, 
+        preproc_mode: (str) preprocessing mode, 'caffe', 'tf' or 'torch'
+                      'caffe' will bring an image in 'bgr' model and subtract the mean of the channels [103.939, 116.779, 123.68] to make zero mean
+                      'tf' will bring the image in 'rgb' model and the range of [-1,+1], preproc_image_pixels = -1 + (image_pixels/127.5)
+                      'torch' will bring the image in 'rgb' mode and apply double normalization based on imagenet data, 
                                 _image_pixels = (image_pixels/255.)
                                 preproc_image_pixels = (_image_pixels - torch_mean)/torch_std
         interpolation: (str) interpolation method, supported values are 'bilinear', 'nearest'
     '''
-    img = tf.keras.utils.load_img(image_path, grayscale = False, color_mode = 'rgb',
-     target_size = (width,height), interpolation=interpolation)
-    img_array = np.array([tf.keras.utils.img_to_array(img)])
-    if preproc_mode.lower() == 'tf':
-        img_array = -1 + img_array / 127.5
-    elif preproc_mode.lower() == 'torch':
-        img_array = img_array / 255.0
-        img_array = (img_array - torch_means)
-        img_array = img_array/ torch_std
+    if preproc_mode.lower() == 'caffe':
+        # Load and preprocess the image
+        image = cv2.imread(image_path)  # Load image in BGR format
+        image_resized = cv2.resize(image, (height,width))  - caffe_mean # Resize and zero-mean
+        
+        # Convert image to float32
+        input_image = image_resized.astype(np.float32) 
+        # Add a batch dimension (b, h, w, c)
+        img_array = np.expand_dims(input_image, axis=0)
+    
+    elif preproc_mode.lower() in ['torch', 'tf']:
+        
+        img = tf.keras.utils.load_img(image_path, grayscale = False, color_mode = 'rgb',
+            target_size = (width,height), interpolation=interpolation)
+        img_array = np.array([tf.keras.utils.img_to_array(img)])
+        
+        if preproc_mode.lower() == 'tf':
+            img_array = -1 + img_array / 127.5
+        elif preproc_mode.lower() == 'torch':
+            img_array = img_array / 255.0
+            img_array = (img_array - torch_means)
+            img_array = img_array/ torch_std
     else:
         raise Exception('Only \'tf\' or \'torch\' preprocessings are supported.')
     
