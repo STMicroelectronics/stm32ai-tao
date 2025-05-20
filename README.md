@@ -2,11 +2,13 @@
 
 Welcome to STM32AI - TAO!
 
-This repository provides a collection of example scripts that can be used to Train, Adapt and Optimize for given use cases and then easily pass the resulting AI models through STEdgeAI Dev Cloud to deploy them on your favourite STM32 boards.
+This repository provides a collection of example scripts that can be used to Train, Adapt and Optimize for given use cases and then easily pass the resulting AI models through [STEdgeAI Developer Cloud](https://stm32ai.st.com/stm32-cube-ai-dc/) and [stm32ai-modelzoo-services](https://github.com/STMicroelectronics/stm32ai-modelzoo-services/tree/main/) to deploy them on your favourite STM32 boards.
 
 The notebook scripts in [classification_tf2](./classification_tf2/) provide a complete life cycle of the model training, optimization and benchmarking using [NVIDIA TAO Toolkit](https://developer.nvidia.com/tao-toolkit) and [STEdgeAI Developer Cloud](https://stm32ai.st.com/stm32-cube-ai-dc/).
 
 While, the notebook scripts in [classification_pretrained](./classification_pretrained/) lets you download and use one of the pretrained models from pretrained [classification model repository of Nvidia TAO](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/pretrained_classification/version). The models come under [creative commons license](https://creativecommons.org/licenses/by/4.0/) as mentioned on the [explainability](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/pretrained_classification/explainability) link for these models. The notebook in this folder provides a demo example of how a user can download mobilenet_v2 model from the repository, convert it to onnx, and then quantize it, and finally, benchmarking using [STEdgeAI Developer Cloud](https://stm32ai.st.com/stm32-cube-ai-dc/).
+
+Finally, the notebook scripts in [yolo_v4_tiny](./yolo_v4_tiny/) provide a complete life cycle of the model training, optimization and exporting the model as onnx format. Then the exported model can be used to run inference, quantizing to 8-bit resolution, benchmarking on STM32 targets, and deployment on STM32 targets.
 
 NVIDIA Train Adapt Optimize (TAO) Toolkit is a simple and easy-to-use Python based AI toolkit for taking purpose-built AI models and customizing them with users' own data.
 
@@ -14,7 +16,7 @@ NVIDIA Train Adapt Optimize (TAO) Toolkit is a simple and easy-to-use Python bas
 
 Bring Your Own Model (BYOM) is a Python based package that converts any open source ONNX model to TAO compatible model. All you need is to export any model from a deep learning framework of your choice (e.g. PyTorch) to ONNX and run TAO BYOM converter.
 
-With the Jupyter notebooks in [classification_tf2](./classification_tf2/), you will learn how to leverage the simplicity and convenience of TAO to take a pretrained model, finetune it on a sample dataset and then:
+With the Jupyter notebooks in [classification_tf2](./classification_tf2/) and [yolo_v4_tiny](./yolo_v4_tiny/), you will learn how to leverage the simplicity and convenience of TAO to take a pretrained model for image classification and object detection respectively, finetune it on a sample dataset and then:
 - Prune the finetuned model,
 - Retrain the pruned model to recover lost accuracy,
 - Export the pruned model as an onnx model,
@@ -24,7 +26,7 @@ At the end, you will have generated a trained and optimized classification model
 
 <br>
 
-<img style="float: center;background-color: white; width: 640" src="./TAO-STM32CubeAI.png">
+<img style="float: center;background-color: white; width: 640" src="./docs/TAO-STM32CubeAI.png">
 
 <br>
 
@@ -59,6 +61,12 @@ This project contains two folders:
   - **[tao_person](./classification_tf2/tao_person/)** : contains a jupyter notebook `stm32ai_tao_efficientnet_b0.ipynb` to fine-tune the pretrained `efficientnet_b0` model obtained from NGC model zoo, for person-detection use case as well as the configurations for running this file in folder [specs](./classification_tf2/tao_person/specs/).
 - **[classification_pretrained](./classification_pretrained/)**
   - Notebook to work with the pretrained image classification models from [classification model repository of Nvidia TAO](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/pretrained_classification/version), to run the inference on them, quantize the model using onnxruntime, and then benchmark it using the [STEdgeAI Developer Cloud](https://stm32ai-cs.st.com/home).
+- **[yolo_v4_tiny](./yolo_v4_tiny/)**
+  - **[specs](./yolo_v4_tiny/specs/)**: contains the specification files for the dataset conversion to yolo compatible formats, training and retraining after the pruning.
+  - **[utils](./yolo_v4_tiny/utils/)**: contains two utility python scripts, one to conver the coco dataset to kitti dataset, and the other to remove the post-processing node/layer of the exported onnx model.
+  - **[yolo_v4_tiny](./yolo_v4_tiny/yolo_v4_tiny.ipynb)**: notebook scripts to use transfer learning to create a yolo_v4_tiny object detection model for person detection, optimizing it using pruning and then retraining to regain the lost accuracy. Finally it exports the trained and adapted model to the onnx format.
+  - **[using_yolo_v4_tiny_with_stm32ai_modelzoo.ipynb](./yolo_v4_tiny/using_yolo_v4_tiny_with_stm32ai_modelzoo.ipynb)**: uses the [stm32ai-modelzoo-services](https://github.com/STMicroelectronics/stm32ai-modelzoo-services/tree/main/) scripts to run the inference, quantization, benchmarking and deployment of the exported onnx model.
+
 - **[LICENSE.md](./LICENSE.md)**
 - **[SECURITY.md](./SECURITY.md)**
 - **[CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)**
@@ -77,7 +85,7 @@ git clone https://github.com/STMicroelectronics/stm32ai-tao.git
     - `byom_converter_***.ipynb`,
     - `stm32ai_tao_***.ipynb`, and
     - `tao_image_classification.ipynb`.
-- The users need to create seperate Python environments using conda or pyenv to run these notebooks. The Python environments can be created using following commands named as `byom_dev` (for the byom_converter_***.ipynb) and `byom_launcher` (for all the rest):
+- The users need to create separate Python environments using conda or pyenv to run these notebooks. The Python environments can be created using following commands named as `byom_dev` (for the byom_converter_***.ipynb) and `byom_launcher` (for all the rest):
 ```
 cd stm32ai-tao
 python -m venv <env-name>
@@ -99,6 +107,6 @@ The running of Jupyter notebooks requires:
 - activate the `byom_launcher` environment for the `stm32ai_tao_***.ipynb` and `tao_image_classification.ipynb` notebooks to adopt, optimize, benchmark and to convert your byom models in optimized c code for STM32 projects.
   - an internet connection is needed to run some cells of the notebooks
     - to download the dataset,
-    - pretrained mdoels from ngc cloud,
+    - to download the pretrained models from ngc cloud,
     - to get the models from torch.hub, and
     - to connect to STEdgeAI developer cloud.
